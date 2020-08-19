@@ -53,8 +53,7 @@ deploy() {
         --template-file ${DIR}/ecs-cluster.yaml \
         --capabilities CAPABILITY_IAM \
         --parameter-overrides \
-            "EnvironmentName=${ENVIRONMENT_NAME}" \
-            "KeyName=${KEY_PAIR_NAME}"
+            "EnvironmentName=${ENVIRONMENT_NAME}"
 }
 
 main() {

@@ -40,14 +40,14 @@ check_env() {
 
 deploy() {
     echo "${ACTION}.."
-    
+
     if [[ ${ACTION} = "delete-stack" ]]; then
         aws --profile ${AWS_PROFILE} --region ${AWS_REGION} \
             cloudformation delete-stack \
             --stack-name ${ENVIRONMENT_NAME}-ecs-voteapp
         return
     fi
-    
+
     aws --profile ${AWS_PROFILE} --region ${AWS_REGION} \
         cloudformation ${ACTION} \
         --stack-name ${ENVIRONMENT_NAME}-ecs-voteapp \
@@ -64,12 +64,12 @@ register_prometheus_grafana() {
     web_target_group=${ENVIRONMENT_NAME}-web
     web_target_group_arn=$(aws elbv2 describe-target-groups --names $web_target_group --query "TargetGroups[0].TargetGroupArn" --output text)
     web_registered_ip=$(aws elbv2 describe-target-health --target-group-arn $web_target_group_arn --query "TargetHealthDescriptions[0].Target.Id" --output=text)
-    
+
     # Get prometheus target group name and arn => register web target
     prom_target_group=${ENVIRONMENT_NAME}-prometheus-1
     prom_target_group_arn=$(aws elbv2 describe-target-groups --names $prom_target_group --query "TargetGroups[0].TargetGroupArn" --output text)
     aws elbv2 register-targets --target-group-arn $prom_target_group_arn --targets Id=$web_registered_ip,Port=9090
-    
+
     # Get grafana target group name and arn => register web target
     grafana_target_group=${ENVIRONMENT_NAME}-grafana-1
     grafana_target_group_arn=$(aws elbv2 describe-target-groups --names $grafana_target_group --query "TargetGroups[0].TargetGroupArn" --output text)
@@ -79,12 +79,12 @@ register_prometheus_grafana() {
 print_info() {
     print "Public endpoints"
     print "================"
-    url=$(aws cloudformation --region us-west-2 describe-stacks --stack-name ${ENVIRONMENT_NAME}-ecs-cluster --query 'Stacks[0].Outputs[?OutputKey==`ExternalUrl`].OutputValue' --output text)
+    url=$(aws cloudformation --region ${AWS_REGION} describe-stacks --stack-name ${ENVIRONMENT_NAME}-ecs-cluster --query 'Stacks[0].Outputs[?OutputKey==`ExternalUrl`].OutputValue' --output text)
     print "voteapp: $url"
     print "prometheus: $url:9090/targets"
     print "grafana: $url:3000"
-    
-    logs=$(aws cloudformation --region us-west-2 describe-stacks --stack-name ${ENVIRONMENT_NAME}-ecs-cluster --query 'Stacks[0].Outputs[?OutputKey==`ECSServiceLogGroup`].OutputValue' --output text)
+
+    logs=$(aws cloudformation --region ${AWS_REGION} describe-stacks --stack-name ${ENVIRONMENT_NAME}-ecs-cluster --query 'Stacks[0].Outputs[?OutputKey==`ECSServiceLogGroup`].OutputValue' --output text)
     print "logs: https://${AWS_REGION}.console.aws.amazon.com/cloudwatch/home?region=${AWS_REGION}#logStream:group=$logs"
 }
 
